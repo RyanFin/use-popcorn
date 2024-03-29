@@ -60,7 +60,9 @@ export default function App() {
       </NavBar>
       {/* Main does not need movies prop anymore */}
       <Main>
-        <ListBox movies={movies} />
+        <ListBox>
+          <MovieList movies={movies} />
+        </ListBox>
         <WatchBox />
       </Main>
     </>
@@ -125,7 +127,9 @@ function Main({ children }) {
 }
 
 // stateful component
-function ListBox({ movies }) {
+// replace list box with children, so that component composition can take place
+// and no prop drilling is required
+function ListBox({ children }) {
   const [isOpen1, setIsOpen1] = useState(true);
   return (
     <div className="box">
@@ -135,7 +139,7 @@ function ListBox({ movies }) {
       >
         {isOpen1 ? "–" : "+"}
       </button>
-      {isOpen1 && <MovieList movies={movies} />}
+      {isOpen1 && children}
     </div>
   );
 }
