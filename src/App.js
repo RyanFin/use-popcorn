@@ -53,11 +53,16 @@ export default function App() {
   const [movies, setMovies] = useState(tempMovieData);
   return (
     <>
+      {/* NavBar does not need movies prop anymore */}
       <NavBar>
         <Search />
         <NumResults movies={movies} />
       </NavBar>
-      <Main movies={movies} />
+      {/* Main does not need movies prop anymore */}
+      <Main>
+        <ListBox movies={movies} />
+        <WatchBox />
+      </Main>
     </>
   );
 }
@@ -109,11 +114,12 @@ function Search() {
 }
 
 // structural component
-function Main({ movies }) {
+// replace 'movies' that is a prop to be 'prop drilled' with 'children'
+function Main({ children }) {
   return (
     <main className="main">
-      <ListBox movies={movies} />
-      <WatchBox />
+      {/* empty box for reusability that can load anything */}
+      {children}
     </main>
   );
 }
