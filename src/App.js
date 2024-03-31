@@ -51,6 +51,7 @@ const tempWatchedData = [
 export default function App() {
   // prop drill mvie to the movielist component
   const [movies, setMovies] = useState(tempMovieData);
+  const [watched, setWatched] = useState(tempWatchedData);
   return (
     <>
       {/* NavBar does not need movies prop anymore */}
@@ -60,10 +61,18 @@ export default function App() {
       </NavBar>
       {/* Main does not need movies prop anymore */}
       <Main>
-        <ListBox>
+        <Box>
+          {/* cannot prop drill any further, as the Movie component does not use 'movies' prop */}
+          {/* it uses the 'movie' prop instead */}
           <MovieList movies={movies} />
-        </ListBox>
-        <WatchBox />
+        </Box>
+        <Box>
+          <>
+            <WatchedSummary watched={watched} />
+            <WatchedMovieList watched={watched} />
+          </>
+        </Box>
+        {/* <WatchBox /> */}
       </Main>
     </>
   );
@@ -129,20 +138,41 @@ function Main({ children }) {
 // stateful component
 // replace list box with children, so that component composition can take place
 // and no prop drilling is required
-function ListBox({ children }) {
-  const [isOpen1, setIsOpen1] = useState(true);
+function Box({ children }) {
+  const [isOpen, setIsOpen] = useState(true);
   return (
     <div className="box">
-      <button
-        className="btn-toggle"
-        onClick={() => setIsOpen1((open) => !open)}
-      >
-        {isOpen1 ? "–" : "+"}
+      <button className="btn-toggle" onClick={() => setIsOpen((open) => !open)}>
+        {isOpen ? "–" : "+"}
       </button>
-      {isOpen1 && children}
+      {isOpen && children}
     </div>
   );
 }
+
+// stateful component
+// function WatchBox() {
+//   const [watched, setWatched] = useState(tempWatchedData);
+//   const [isOpen2, setIsOpen2] = useState(true);
+
+//   return (
+//     <div className="box">
+//       <button
+//         className="btn-toggle"
+//         onClick={() => setIsOpen2((open) => !open)}
+//       >
+//         {isOpen2 ? "–" : "+"}
+//       </button>
+//       {isOpen2 && (
+//         <>
+//           <WatchedSummary watched={watched} />
+
+//           <WatchedMovieList watched={watched} />
+//         </>
+//       )}
+//     </div>
+//   );
+// }
 
 // stateful component
 function MovieList({ movies }) {
@@ -171,31 +201,8 @@ function Movie({ movie }) {
   );
 }
 
-// stateful component
-function WatchBox() {
-  const [watched, setWatched] = useState(tempWatchedData);
-  const [isOpen2, setIsOpen2] = useState(true);
-
-  return (
-    <div className="box">
-      <button
-        className="btn-toggle"
-        onClick={() => setIsOpen2((open) => !open)}
-      >
-        {isOpen2 ? "–" : "+"}
-      </button>
-      {isOpen2 && (
-        <>
-          <WatchedSummary watched={watched} />
-
-          <WatchedMovieList watched={watched} />
-        </>
-      )}
-    </div>
-  );
-}
-
 // stateless component
+// watched state is used here with .map()
 function WatchedMovieList({ watched }) {
   return (
     <ul className="list">
@@ -241,6 +248,7 @@ function WatchedSummary({ watched }) {
       <div>
         <p>
           <span>#️⃣</span>
+          {/* 'prop drilled' watched state is used here with .length */}
           <span>{watched.length} movies</span>
         </p>
         <p>
