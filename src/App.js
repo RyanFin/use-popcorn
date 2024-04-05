@@ -55,20 +55,36 @@ export default function App() {
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false); //initialise isLoading as false
+  const [error, setError] = useState("");
   const query = "avatar+the+last+airbender";
+  // const query = "sdfksfjbpsdf";
 
   useEffect(function () {
     async function fetchMovies() {
-      // set is loading state to true just before the API call is made
-      setIsLoading(true);
-      const res = await fetch(
-        `http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=${query}`
-      );
-      const data = await res.json();
-      setMovies(data.Search);
-      console.log(data.Search);
-      // reset is loading state back to false
-      setIsLoading(false);
+      try {
+        // set is loading state to true just before the API call is made
+        setIsLoading(true);
+        const res = await fetch(
+          `http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=${query}`
+        );
+
+        if (!res.ok)
+          throw new Error("Something went wrong with fetching movies");
+
+        const data = await res.json();
+
+        if (data.Response === "False") {
+          throw new Error(" Movie not found");
+        }
+        setMovies(data.Search);
+        console.log(data);
+        // reset is loading state back to false
+      } catch (err) {
+        console.log(err.message);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
     }
     fetchMovies();
   }, []);
@@ -83,7 +99,13 @@ export default function App() {
       {/* Main does not need movies prop anymore */}
       <Main>
         {/* Listbox */}
-        <Box>{isLoading ? <Loader /> : <MovieList movies={movies} />}</Box>
+        <Box>
+          {/* {isLoading ? <Loader /> : <MovieList movies={movies} />} */}
+          {/* they have to be mutually exclusive. Only one can be rendered at one time */}
+          {isLoading && <Loader />}
+          {isLoading && !error && <MovieList movies={movies} />}
+          {error && <ErrorMessage message={error} />}
+        </Box>
         {/* WatchBox */}
         <Box>
           <WatchedSummary watched={watched} />
@@ -97,6 +119,15 @@ export default function App() {
 function Loader() {
   // this is where I can add a chakra-ui spinning animation
   return <p className="loader">Loading...</p>;
+}
+
+function ErrorMessage({ message }) {
+  return (
+    <p className="error">
+      <span>📛</span>
+      {message}
+    </p>
+  );
 }
 
 // structural component
