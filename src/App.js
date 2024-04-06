@@ -57,7 +57,8 @@ export default function App() {
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false); //initialise isLoading as false
   const [error, setError] = useState("");
-  const tempQuery = "avatar+the+last+airbender";
+  // selected ID state lifted up. It will be passed down into the watch box child
+  const [selectedID, setSelectedID] = useState(null);
 
   // useEffect(function () {
   //   console.log("Only after initial render");
@@ -75,6 +76,15 @@ export default function App() {
   // );
 
   // console.log("During render");
+
+  // onclick a movie
+  function handleSelectMovie(id) {
+    setSelectedID((selectedId) => (id === selectedID ? null : id));
+  }
+
+  function handleCloseMovie() {
+    setSelectedID(null);
+  }
 
   useEffect(
     function () {
@@ -129,7 +139,11 @@ export default function App() {
       <Main>
         {/* Listbox */}
         <Box>
-          {isLoading ? <Loader /> : <MovieList movies={movies} />}
+          {isLoading ? (
+            <Loader />
+          ) : (
+            <MovieList movies={movies} onSelectedMovie={handleSelectMovie} />
+          )}
           {/* they have to be mutually exclusive. Only one can be rendered at one time */}
           {/* {isLoading && <Loader />} */}
           {/* {isLoading && !error && <MovieList movies={movies} />} */}
@@ -137,8 +151,17 @@ export default function App() {
         </Box>
         {/* WatchBox */}
         <Box>
-          <WatchedSummary watched={watched} />
-          <WatchedMovieList watched={watched} />
+          {selectedID ? (
+            <MovieDetails
+              selectedID={selectedID}
+              onCloseMovie={handleCloseMovie}
+            />
+          ) : (
+            <>
+              <WatchedSummary watched={watched} />
+              <WatchedMovieList watched={watched} />
+            </>
+          )}
         </Box>
       </Main>
     </>
@@ -234,20 +257,24 @@ function Main({ children }) {
 // }
 
 // stateful component
-function MovieList({ movies }) {
+function MovieList({ movies, onSelectedMovie }) {
   return (
-    <ul className="list">
+    <ul className="list list-movies">
       {movies?.map((movie) => (
-        <Movie movie={movie} key={movie.imdbID} />
+        <Movie
+          movie={movie}
+          key={movie.imdbID}
+          onSelectedMovie={onSelectedMovie}
+        />
       ))}
     </ul>
   );
 }
 
 // stateless component
-function Movie({ movie }) {
+function Movie({ movie, onSelectedMovie }) {
   return (
-    <li key={movie.imdbID}>
+    <li key={movie.imdbID} onClick={() => onSelectedMovie(movie.imdbID)}>
       <img src={movie.Poster} alt={`${movie.Title} poster`} />
       <h3>{movie.Title}</h3>
       <div>
@@ -356,6 +383,17 @@ function WatchedSummary({ watched }) {
           <span>{avgRuntime} min</span>
         </p>
       </div>
+    </div>
+  );
+}
+
+function MovieDetails({ selectedID, onCloseMovie }) {
+  return (
+    <div className="details">
+      <button className="btn-back" onClick={() => onCloseMovie()}>
+        &larr;
+      </button>
+      {selectedID}
     </div>
   );
 }
