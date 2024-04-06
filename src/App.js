@@ -52,58 +52,87 @@ const KEY = "e0fbb59f";
 // structural component
 export default function App() {
   // prop drill movie to the movielist component
+  const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false); //initialise isLoading as false
   const [error, setError] = useState("");
-  const query = "avatar+the+last+airbender";
-  // const query = "sdfksfjbpsdf";
+  const tempQuery = "avatar+the+last+airbender";
 
-  useEffect(function () {
-    async function fetchMovies() {
-      try {
-        // set is loading state to true just before the API call is made
-        setIsLoading(true);
-        const res = await fetch(
-          `http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=${query}`
-        );
+  // useEffect(function () {
+  //   console.log("Only after initial render");
+  // }, []);
 
-        if (!res.ok)
-          throw new Error("Something went wrong with fetching movies");
+  // useEffect(function () {
+  //   console.log("After every render of any state/prop");
+  // });
 
-        const data = await res.json();
+  // useEffect(
+  //   function () {
+  //     console.log("synchronised with 'query' state changes");
+  //   },
+  //   [query]
+  // );
 
-        if (data.Response === "False") {
-          throw new Error(" Movie not found");
+  // console.log("During render");
+
+  useEffect(
+    function () {
+      async function fetchMovies() {
+        try {
+          // always reset the error
+          setError("");
+          // set is loading state to true just before the API call is made
+          setIsLoading(true);
+          const res = await fetch(
+            `http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=${query}`
+          );
+
+          if (query.length === 0) {
+            setMovies([]);
+            setError("");
+            return;
+          }
+
+          if (!res.ok)
+            throw new Error("Something went wrong with fetching movies");
+
+          const data = await res.json();
+
+          if (data.Response === "False") {
+            throw new Error(" Movie not found");
+          }
+
+          setMovies(data.Search);
+          // reset is loading state back to false
+        } catch (err) {
+          console.log(err.message);
+          setError(err.message);
+        } finally {
+          setIsLoading(false);
         }
-        setMovies(data.Search);
-        console.log(data);
-        // reset is loading state back to false
-      } catch (err) {
-        console.log(err.message);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
       }
-    }
-    fetchMovies();
-  }, []);
+      fetchMovies();
+    },
+    [query] // update to 'query' state variable will re-run the useEffect function.
+    // Effect reacts to changes to the 'query' state variable
+  );
 
   return (
     <>
       {/* NavBar does not need movies prop anymore */}
       <NavBar>
-        <Search />
+        <Search query={query} setQuery={setQuery} />
         <NumResults movies={movies} />
       </NavBar>
       {/* Main does not need movies prop anymore */}
       <Main>
         {/* Listbox */}
         <Box>
-          {/* {isLoading ? <Loader /> : <MovieList movies={movies} />} */}
+          {isLoading ? <Loader /> : <MovieList movies={movies} />}
           {/* they have to be mutually exclusive. Only one can be rendered at one time */}
-          {isLoading && <Loader />}
-          {isLoading && !error && <MovieList movies={movies} />}
+          {/* {isLoading && <Loader />} */}
+          {/* {isLoading && !error && <MovieList movies={movies} />} */}
           {error && <ErrorMessage message={error} />}
         </Box>
         {/* WatchBox */}
@@ -163,8 +192,7 @@ function Logo() {
 }
 
 // stateful component
-function Search() {
-  const [query, setQuery] = useState("");
+function Search({ query, setQuery }) {
   return (
     <input
       className="search"
