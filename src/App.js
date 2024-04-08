@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import StarRating from "./components/StarRating";
+import { Skeleton } from "@mui/material";
 
 const tempMovieData = [
   {
@@ -78,6 +79,11 @@ export default function App() {
 
   // console.log("During render");
 
+  function handleAddWatched(movie) {
+    // add new movie object to the array
+    setWatched((watched) => [...watched, movie]);
+  }
+
   // onclick a movie
   function handleSelectMovie(id) {
     setSelectedID((selectedId) => (id === selectedID ? null : id));
@@ -141,7 +147,7 @@ export default function App() {
         {/* Listbox */}
         <Box>
           {isLoading ? (
-            <Loader />
+            <MovieLoader />
           ) : (
             <MovieList movies={movies} onSelectedMovie={handleSelectMovie} />
           )}
@@ -156,6 +162,7 @@ export default function App() {
             <MovieDetails
               selectedID={selectedID}
               onCloseMovie={handleCloseMovie}
+              onAddWatched={handleAddWatched}
             />
           ) : (
             <>
@@ -169,9 +176,31 @@ export default function App() {
   );
 }
 
-function Loader() {
+function MovieLoader() {
   // this is where I can add a chakra-ui spinning animation
-  return <p className="loader">Loading...</p>;
+  return [...Array(8)].map((x, i) => (
+    <Skeleton
+      variant="rounded"
+      width="100%"
+      height={95}
+      sx={{ marginTop: 1 }}
+      key={i}
+    />
+  ));
+}
+
+function MoviePreviewLoader() {
+  return (
+    <>
+      <Skeleton variant="rounded" width="100%" height={200} />
+      <Skeleton
+        variant="rounded"
+        width="100%"
+        height={350}
+        sx={{ marginTop: 3 }}
+      />
+    </>
+  );
 }
 
 function ErrorMessage({ message }) {
@@ -388,7 +417,7 @@ function WatchedSummary({ watched }) {
   );
 }
 
-function MovieDetails({ selectedID, onCloseMovie }) {
+function MovieDetails({ selectedID, onCloseMovie, onAddWatched }) {
   const [movie, setMovie] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -405,6 +434,18 @@ function MovieDetails({ selectedID, onCloseMovie }) {
     Genre: genre,
   } = movie;
 
+  function handleAdd() {
+    const newWatchedMovie = {
+      imdbID: selectedID,
+      title,
+      year,
+      poster,
+      imdbRating: Number(imdbRating),
+      runtime: Number(runtime.split(" ").at(0)),
+    };
+    onAddWatched(newWatchedMovie);
+  }
+
   useEffect(
     function () {
       async function getMovieDetails() {
@@ -420,13 +461,13 @@ function MovieDetails({ selectedID, onCloseMovie }) {
 
       getMovieDetails();
     },
-    [selectedID]
+    [selectedID] //code will execute each time the selectedID state changes
   );
 
   return (
     <div className="details">
       {isLoading ? (
-        <Loader />
+        <MoviePreviewLoader />
       ) : (
         <>
           <header>
@@ -450,6 +491,9 @@ function MovieDetails({ selectedID, onCloseMovie }) {
             <div className="rating">
               <StarRating maxRating={10} size={24} />
             </div>
+            <button className="btn-add" onClick={handleAdd}>
+              + Add to list
+            </button>
             <p>
               <em>{plot}</em>
             </p>
