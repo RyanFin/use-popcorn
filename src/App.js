@@ -261,7 +261,13 @@ function Search({ query, setQuery }) {
       type="text"
       placeholder="Search movies..."
       value={query}
-      onChange={(e) => setQuery(e.target.value)}
+      onChange={(e) => {
+        setQuery(e.target.value);
+        if (e.target.value === "") {
+          // reset page title if no string is entered in the text box
+          document.title = "usePopcorn";
+        }
+      }}
     />
   );
 }
@@ -497,6 +503,15 @@ function MovieDetails({ selectedID, onCloseMovie, onAddWatched, watched }) {
       getMovieDetails();
     },
     [selectedID] //code will execute each time the selectedID state changes
+  );
+
+  // effect to change the title of the page based on the loaded movie/tv show
+  useEffect(
+    function () {
+      if (!title) return;
+      document.title = `${title}`;
+    },
+    [title] // waits for this variable to changed, then will execute code once this property is changed
   );
 
   return (
