@@ -263,10 +263,10 @@ function Search({ query, setQuery }) {
       value={query}
       onChange={(e) => {
         setQuery(e.target.value);
-        if (e.target.value === "") {
-          // reset page title if no string is entered in the text box
-          document.title = "usePopcorn";
-        }
+        // if (e.target.value === "") {
+        //   // reset page title if no string is entered in the text box
+        //   document.title = "usePopcorn";
+        // }
       }}
     />
   );
@@ -455,6 +455,7 @@ function MovieDetails({ selectedID, onCloseMovie, onAddWatched, watched }) {
 
   const {
     Title: title,
+    Type: type,
     Year: year,
     Poster: poster,
     Runtime: runtime,
@@ -470,6 +471,11 @@ function MovieDetails({ selectedID, onCloseMovie, onAddWatched, watched }) {
   //   return watched.some((w) => w.imdbID === id);
   //   // const isWatched = watched.map((movie) => movie.imdbID);
   // }
+
+  var outputType = "";
+  if (type !== undefined) {
+    outputType = type.charAt(0).toUpperCase() + type.slice(1);
+  }
 
   function handleAdd() {
     const newWatchedMovie = {
@@ -509,9 +515,14 @@ function MovieDetails({ selectedID, onCloseMovie, onAddWatched, watched }) {
   useEffect(
     function () {
       if (!title) return;
-      document.title = `${title}`;
+      document.title = `${title} ${userRating && `(Rated ${userRating} ⭐️)`}`;
+
+      // cleanup function
+      return function () {
+        document.title = "usePopcorn";
+      };
     },
-    [title] // waits for this variable to changed, then will execute code once this property is changed
+    [title, userRating] // waits for this variable to changed, then will execute code once this property mounts or rerenders
   );
 
   return (
@@ -528,7 +539,8 @@ function MovieDetails({ selectedID, onCloseMovie, onAddWatched, watched }) {
             <div className="details-overview">
               <h2>{title}</h2>
               <p>
-                {released} &bull; {runtime}
+                {type === "movie" ? <p>🎬</p> : <p>📺</p>}
+                {outputType} &bull; {released} &bull; {runtime}
               </p>
               <p>{genre}</p>
               <p>
