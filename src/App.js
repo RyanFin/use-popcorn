@@ -100,6 +100,8 @@ export default function App() {
 
   useEffect(
     function () {
+      const controller = new AbortController();
+
       async function fetchMovies() {
         try {
           // always reset the error
@@ -107,7 +109,8 @@ export default function App() {
           // set is loading state to true just before the API call is made
           setIsLoading(true);
           const res = await fetch(
-            `https://www.omdbapi.com/?&apikey=${KEY}&s=${query}`
+            `https://www.omdbapi.com/?&apikey=${KEY}&s=${query}`,
+            { signal: controller.signal }
           );
 
           if (query.length === 0) {
@@ -126,15 +129,27 @@ export default function App() {
           }
 
           setMovies(data.Search);
+          setError("");
           // reset is loading state back to false
         } catch (err) {
-          console.log(err.message);
-          setError(err.message);
+          // ignore abort error
+          if (err.name !== "AbortError") {
+            console.log(err.message);
+            setError(err.message);
+          }
         } finally {
           setIsLoading(false);
         }
       }
+
+      // close movie when searching in the search bar
+      handleCloseMovie();
       fetchMovies();
+
+      // clean up function
+      return function () {
+        controller.abort();
+      };
     },
     [query] // update to 'query' state variable will re-run the useEffect function.
     // Effect reacts to changes to the 'query' state variable
@@ -493,6 +508,27 @@ function MovieDetails({ selectedID, onCloseMovie, onAddWatched, watched }) {
     onCloseMovie();
   }
 
+  // useEffect is the 'escape' hatch. Allows you to write pure JS and avoid using the React way
+  useEffect(
+    function () {
+      function callback(e) {
+        // if the escape button is pressed on the keyboard
+        if (e.code === "Escape") {
+          onCloseMovie();
+        }
+      }
+
+      document.addEventListener("keydown", callback);
+
+      // cleanup
+      return function () {
+        // prevent multiple event listeners occuring when pressing the escape key
+        document.removeEventListener("keydown", callback);
+      };
+    },
+    [onCloseMovie]
+  );
+
   useEffect(
     function () {
       async function getMovieDetails() {
@@ -515,11 +551,17 @@ function MovieDetails({ selectedID, onCloseMovie, onAddWatched, watched }) {
   useEffect(
     function () {
       if (!title) return;
-      document.title = `${title} ${userRating && `(Rated ${userRating} ⭐️)`}`;
+      document.title = `${outputType} | ${title} ${
+        userRating && `(Rated ${userRating} ⭐️)`
+      }`;
 
       // cleanup function
+      // runs after the component unmounts
+      // closure. Title will be remembered after unmount
       return function () {
         document.title = "usePopcorn";
+        // clos
+        // console.log(`clean up effect for movie ${title}`)
       };
     },
     [title, userRating] // waits for this variable to changed, then will execute code once this property mounts or rerenders
@@ -539,7 +581,9 @@ function MovieDetails({ selectedID, onCloseMovie, onAddWatched, watched }) {
             <div className="details-overview">
               <h2>{title}</h2>
               <p>
-                {type === "movie" ? <p>🎬</p> : <p>📺</p>}
+                {type === "movie" && <p>🎬</p>}
+                {type === "series" && <p>📺</p>}
+                {type === "game" && <p>🎮</p>}
                 {outputType} &bull; {released} &bull; {runtime}
               </p>
               <p>{genre}</p>
