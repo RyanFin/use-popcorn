@@ -13,11 +13,11 @@ export default function App() {
   const [error, setError] = useState("");
   // selected ID state lifted up. It will be passed down into the watch box child
   const [selectedID, setSelectedID] = useState(null);
-  // const [watched, setWatched] = useState([]);
-  const [watched, setWatched] = useState(function () {
-    const storedValue = localStorage.getItem("watched");
-    return JSON.parse(storedValue);
-  });
+  const [watched, setWatched] = useState([]);
+  // const [watched, setWatched] = useState(function () {
+  //   const storedValue = localStorage.getItem("watched");
+  //   return JSON.parse(storedValue);
+  // });
 
   // useEffect(function () {
   //   console.log("Only after initial render");
@@ -237,12 +237,23 @@ function Logo() {
 
 // stateful component
 function Search({ query, setQuery }) {
+  // use ref hook to select input DOM element
+  const inputEl = useRef(null);
+
+  // write code for ref using the useEffect() hook
+  useEffect(function () {
+    // access current ref box, represents the input DOM element itself
+    console.log(inputEl.current);
+    inputEl.current.focus();
+  }, []);
   return (
     <input
       className="search"
       type="text"
       placeholder="Search movies..."
       value={query}
+      // use ref here to tie dependency on the input DOM element
+      ref={inputEl}
       onChange={(e) => {
         setQuery(e.target.value);
         // if (e.target.value === "") {
