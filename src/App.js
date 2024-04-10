@@ -1,53 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import StarRating from "./components/StarRating";
 import { Skeleton } from "@mui/material";
-
-const tempMovieData = [
-  {
-    imdbID: "tt1375666",
-    Title: "Inception",
-    Year: "2010",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-  },
-  {
-    imdbID: "tt0133093",
-    Title: "The Matrix",
-    Year: "1999",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
-  },
-  {
-    imdbID: "tt6751668",
-    Title: "Parasite",
-    Year: "2019",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
-  },
-];
-
-const tempWatchedData = [
-  {
-    imdbID: "tt1375666",
-    Title: "Inception",
-    Year: "2010",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-    runtime: 148,
-    imdbRating: 8.8,
-    userRating: 10,
-  },
-  {
-    imdbID: "tt0088763",
-    Title: "Back to the Future",
-    Year: "1985",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BZmU0M2Y1OGUtZjIxNi00ZjBkLTg1MjgtOWIyNThiZWIwYjRiXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_SX300.jpg",
-    runtime: 116,
-    imdbRating: 8.5,
-    userRating: 9,
-  },
-];
 
 const KEY = "e0fbb59f";
 
@@ -56,11 +9,15 @@ export default function App() {
   // prop drill movie to the movielist component
   const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
-  const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false); //initialise isLoading as false
   const [error, setError] = useState("");
   // selected ID state lifted up. It will be passed down into the watch box child
   const [selectedID, setSelectedID] = useState(null);
+  // const [watched, setWatched] = useState([]);
+  const [watched, setWatched] = useState(function () {
+    const storedValue = localStorage.getItem("watched");
+    return JSON.parse(storedValue);
+  });
 
   // useEffect(function () {
   //   console.log("Only after initial render");
@@ -82,6 +39,8 @@ export default function App() {
   function handleAddWatched(movie) {
     // add new movie object to the array
     setWatched((watched) => [...watched, movie]);
+    // // store in local storage. Need to re append due to stale state
+    // localStorage.setItem("watched", JSON.stringify([...watched, movie]));
   }
 
   // onclick a movie
@@ -97,6 +56,14 @@ export default function App() {
     // remove with id
     setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
   }
+
+  useEffect(
+    function () {
+      // store in local storage
+      localStorage.setItem("watched", JSON.stringify(watched));
+    },
+    [watched]
+  );
 
   useEffect(
     function () {
@@ -492,6 +459,9 @@ function MovieDetails({ selectedID, onCloseMovie, onAddWatched, watched }) {
     outputType = type.charAt(0).toUpperCase() + type.slice(1);
   }
 
+  // to display on screen you need a new piece of state
+  // const [avgRating, setAvgRating] = useState(0);
+
   function handleAdd() {
     const newWatchedMovie = {
       imdbID: selectedID,
@@ -506,6 +476,11 @@ function MovieDetails({ selectedID, onCloseMovie, onAddWatched, watched }) {
     onAddWatched(newWatchedMovie);
 
     onCloseMovie();
+    // state is set asynchronously so it is not showing the latest update of the state
+    // setAvgRating(Number(imdbRating));
+    // setAvgRating((avgRating) => (avgRating + userRating) / 2);
+
+    // alert((avgRating + userRating) / 2);
   }
 
   // useEffect is the 'escape' hatch. Allows you to write pure JS and avoid using the React way
@@ -593,6 +568,7 @@ function MovieDetails({ selectedID, onCloseMovie, onAddWatched, watched }) {
               </p>
             </div>
           </header>
+          {/* <p>{avgRating}</p> */}
           <section>
             {!isWatched ? (
               <div className="rating">
