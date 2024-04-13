@@ -3,6 +3,7 @@ import StarRating from "./components/StarRating";
 import { Skeleton } from "@mui/material";
 import { useMovies } from "./customhooks/useMovies";
 import { useLocalStorageState } from "./customhooks/useLocalStorageState";
+import { useKey } from "./customhooks/useKey";
 
 const KEY = "e0fbb59f";
 // structural component
@@ -173,26 +174,14 @@ function Search({ query, setQuery }) {
   // use ref hook to select input DOM element
   const inputEl = useRef(null);
 
-  // write code for ref using the useEffect() hook
-  useEffect(
-    function () {
-      function callback(e) {
-        if (document.activeElement === inputEl.current) {
-          return;
-        }
+  useKey("Enter", function () {
+    if (document.activeElement === inputEl.current) {
+      return;
+    }
 
-        if (e.code === "Enter") {
-          inputEl.current.focus();
-          setQuery("");
-        }
-      }
-      // we dedicate a separate callback function so that we can cleanup
-      document.addEventListener("keydown", callback);
-      // access current ref box, represents the input DOM element itself
-      inputEl.current.focus();
-    },
-    [setQuery]
-  );
+    inputEl.current.focus();
+    setQuery("");
+  });
 
   return (
     <input
@@ -456,26 +445,7 @@ function MovieDetails({ selectedID, onCloseMovie, onAddWatched, watched }) {
     // alert((avgRating + userRating) / 2);
   }
 
-  // useEffect is the 'escape' hatch. Allows you to write pure JS and avoid using the React way
-  useEffect(
-    function () {
-      function callback(e) {
-        // if the escape button is pressed on the keyboard
-        if (e.code === "Escape") {
-          onCloseMovie();
-        }
-      }
-
-      document.addEventListener("keydown", callback);
-
-      // cleanup
-      return function () {
-        // prevent multiple event listeners occuring when pressing the escape key
-        document.removeEventListener("keydown", callback);
-      };
-    },
-    [onCloseMovie]
-  );
+  useKey("Escape", onCloseMovie);
 
   useEffect(
     function () {
