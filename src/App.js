@@ -13,11 +13,11 @@ export default function App() {
   const [error, setError] = useState("");
   // selected ID state lifted up. It will be passed down into the watch box child
   const [selectedID, setSelectedID] = useState(null);
-  const [watched, setWatched] = useState([]);
-  // const [watched, setWatched] = useState(function () {
-  //   const storedValue = localStorage.getItem("watched");
-  //   return JSON.parse(storedValue);
-  // });
+  // const [watched, setWatched] = useState([]);
+  const [watched, setWatched] = useState(function () {
+    const storedValue = localStorage.getItem("watched");
+    return JSON.parse(storedValue);
+  });
 
   // useEffect(function () {
   //   console.log("Only after initial render");
@@ -241,11 +241,26 @@ function Search({ query, setQuery }) {
   const inputEl = useRef(null);
 
   // write code for ref using the useEffect() hook
-  useEffect(function () {
-    // access current ref box, represents the input DOM element itself
-    console.log(inputEl.current);
-    inputEl.current.focus();
-  }, []);
+  useEffect(
+    function () {
+      function callback(e) {
+        if (document.activeElement === inputEl.current) {
+          return;
+        }
+
+        if (e.code === "Enter") {
+          inputEl.current.focus();
+          setQuery("");
+        }
+      }
+      // we dedicate a separate callback function so that we can cleanup
+      document.addEventListener("keydown", callback);
+      // access current ref box, represents the input DOM element itself
+      inputEl.current.focus();
+    },
+    [setQuery]
+  );
+
   return (
     <input
       className="search"
@@ -438,6 +453,19 @@ function MovieDetails({ selectedID, onCloseMovie, onAddWatched, watched }) {
   const [isLoading, setIsLoading] = useState(false);
   const [userRating, setUserRating] = useState("");
 
+  // we use a ref as we dont want to trigger a re-render when we click on star rating multiple times
+  const countRef = useRef(0);
+
+  // cannot mutate the ref in render logic. Need to use use effect
+  useEffect(
+    function () {
+      if (userRating) {
+        countRef.current = countRef.current + 1;
+      }
+    },
+    [userRating]
+  );
+
   const watchedIDs = watched.map((movie) => movie.imdbID);
   // derived state
   const isWatched = watchedIDs.includes(selectedID);
@@ -482,6 +510,7 @@ function MovieDetails({ selectedID, onCloseMovie, onAddWatched, watched }) {
       imdbRating: Number(imdbRating),
       runtime: Number(runtime.split(" ").at(0)),
       userRating,
+      countRatingDecisions: countRef.current,
     };
 
     onAddWatched(newWatchedMovie);
