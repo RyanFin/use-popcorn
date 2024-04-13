@@ -1,23 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import StarRating from "./components/StarRating";
 import { Skeleton } from "@mui/material";
+import { useMovies } from "./customhooks/useMovies";
+import { useLocalStorageState } from "./customhooks/useLocalStorageState";
 
 const KEY = "e0fbb59f";
-
 // structural component
 export default function App() {
   // prop drill movie to the movielist component
   const [query, setQuery] = useState("");
-  const [movies, setMovies] = useState([]);
-  const [isLoading, setIsLoading] = useState(false); //initialise isLoading as false
-  const [error, setError] = useState("");
+
   // selected ID state lifted up. It will be passed down into the watch box child
   const [selectedID, setSelectedID] = useState(null);
-  // const [watched, setWatched] = useState([]);
-  const [watched, setWatched] = useState(function () {
-    const storedValue = localStorage.getItem("watched");
-    return JSON.parse(storedValue);
-  });
+
+  const { movies, isLoading, error } = useMovies(query);
+
+  const [watched, setWatched] = useLocalStorageState([], "watched");
 
   // useEffect(function () {
   //   console.log("Only after initial render");
@@ -56,71 +54,6 @@ export default function App() {
     // remove with id
     setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
   }
-
-  useEffect(
-    function () {
-      // store in local storage
-      localStorage.setItem("watched", JSON.stringify(watched));
-    },
-    [watched]
-  );
-
-  useEffect(
-    function () {
-      const controller = new AbortController();
-
-      async function fetchMovies() {
-        try {
-          // always reset the error
-          setError("");
-          // set is loading state to true just before the API call is made
-          setIsLoading(true);
-          const res = await fetch(
-            `https://www.omdbapi.com/?&apikey=${KEY}&s=${query}`,
-            { signal: controller.signal }
-          );
-
-          if (query.length === 0) {
-            setMovies([]);
-            setError("");
-            return;
-          }
-
-          if (!res.ok)
-            throw new Error("Something went wrong with fetching movies");
-
-          const data = await res.json();
-
-          if (data.Response === "False") {
-            throw new Error(" Movie not found");
-          }
-
-          setMovies(data.Search);
-          setError("");
-          // reset is loading state back to false
-        } catch (err) {
-          // ignore abort error
-          if (err.name !== "AbortError") {
-            console.log(err.message);
-            setError(err.message);
-          }
-        } finally {
-          setIsLoading(false);
-        }
-      }
-
-      // close movie when searching in the search bar
-      handleCloseMovie();
-      fetchMovies();
-
-      // clean up function
-      return function () {
-        controller.abort();
-      };
-    },
-    [query] // update to 'query' state variable will re-run the useEffect function.
-    // Effect reacts to changes to the 'query' state variable
-  );
 
   return (
     <>
@@ -441,7 +374,7 @@ function WatchedSummary({ watched }) {
         </p>
         <p>
           <span>⏳</span>
-          <span>{avgRuntime} min</span>
+          <span>{avgRuntime.toFixed(1)} min</span>
         </p>
       </div>
     </div>
